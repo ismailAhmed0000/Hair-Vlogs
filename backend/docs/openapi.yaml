@@ -1,0 +1,527 @@
+openapi: 3.0.3
+info:
+  title: Hair Vlogs API
+  description: >
+    API for tracking haircuts and their reference photos over time.
+    Users register/login, then create haircut entries with associated
+    photos (front/side/back/other angles, with one designated as cover).
+  version: "1.0.0"
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+
+tags:
+  - name: Auth
+  - name: Users
+  - name: Haircuts
+  - name: Photos
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login and obtain a JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Get the authenticated user's profile
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      tags: [Users]
+      summary: Update the authenticated user's profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+    delete:
+      tags: [Users]
+      summary: Delete the authenticated user's account
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /haircuts:
+    get:
+      tags: [Haircuts]
+      summary: List the authenticated user's haircuts
+      responses:
+        "200":
+          description: List of haircuts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Haircut"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Haircuts]
+      summary: Create a new haircut entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateHaircutRequest"
+      responses:
+        "201":
+          description: Haircut created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Haircut"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /haircuts/{id}:
+    parameters:
+      - $ref: "#/components/parameters/HaircutId"
+    get:
+      tags: [Haircuts]
+      summary: Get a haircut by id
+      responses:
+        "200":
+          description: Haircut
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Haircut"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Haircuts]
+      summary: Update a haircut
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateHaircutRequest"
+      responses:
+        "200":
+          description: Updated haircut
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Haircut"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Haircuts]
+      summary: Delete a haircut (and its photos)
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /haircuts/{haircutId}/photos:
+    parameters:
+      - name: haircutId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Photos]
+      summary: List photos for a haircut
+      responses:
+        "200":
+          description: List of photos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Photo"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      tags: [Photos]
+      summary: Add a photo to a haircut
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePhotoRequest"
+      responses:
+        "201":
+          description: Photo created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Photo"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /photos/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PhotoId"
+    get:
+      tags: [Photos]
+      summary: Get a photo by id
+      responses:
+        "200":
+          description: Photo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Photo"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Photos]
+      summary: Update a photo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePhotoRequest"
+      responses:
+        "200":
+          description: Updated photo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Photo"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Photos]
+      summary: Delete a photo
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /photos/{id}/cover:
+    parameters:
+      - $ref: "#/components/parameters/PhotoId"
+    patch:
+      tags: [Photos]
+      summary: Set this photo as the cover (thumbnail) for its haircut
+      description: Unsets is_cover on all other photos belonging to the same haircut.
+      responses:
+        "200":
+          description: Updated photo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Photo"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    HaircutId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    PhotoId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Conflict:
+      description: Conflicting resource state
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        created_at:
+          type: string
+          format: date-time
+
+    RegisterRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 255
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 8
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 255
+        email:
+          type: string
+          format: email
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+
+    Haircut:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          example: "Fade - March cut"
+        date_taken:
+          type: string
+          format: date
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        photos:
+          type: array
+          items:
+            $ref: "#/components/schemas/Photo"
+
+    CreateHaircutRequest:
+      type: object
+      required: [title, date_taken]
+      properties:
+        title:
+          type: string
+          example: "Fade - March cut"
+        date_taken:
+          type: string
+          format: date
+        notes:
+          type: string
+
+    UpdateHaircutRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        date_taken:
+          type: string
+          format: date
+        notes:
+          type: string
+
+    PhotoAngle:
+      type: string
+      enum: [front, side, back, other]
+
+    Photo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        haircut_id:
+          type: string
+          format: uuid
+        image_url:
+          type: string
+          format: uri
+        angle:
+          $ref: "#/components/schemas/PhotoAngle"
+        is_cover:
+          type: boolean
+        uploaded_at:
+          type: string
+          format: date-time
+
+    CreatePhotoRequest:
+      type: object
+      required: [image_url]
+      properties:
+        image_url:
+          type: string
+          format: uri
+        angle:
+          $ref: "#/components/schemas/PhotoAngle"
+        is_cover:
+          type: boolean
+          default: false
+
+    UpdatePhotoRequest:
+      type: object
+      properties:
+        image_url:
+          type: string
+          format: uri
+        angle:
+          $ref: "#/components/schemas/PhotoAngle"
+        is_cover:
+          type: boolean
