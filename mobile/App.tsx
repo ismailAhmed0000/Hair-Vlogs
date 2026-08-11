@@ -7,12 +7,15 @@
 
 import { NewAppScreen } from '@react-native/new-app-screen';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { useState } from 'react';
 import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 import { queryClient } from './src/lib/queryClient';
+import { useAuthStore } from './src/store/authStore';
+import { SplashScreen } from './src/screens/SplashScreen';
 
 import './global.css';
 
@@ -31,6 +34,12 @@ function App() {
 
 function AppContent() {
   const safeAreaInsets = useSafeAreaInsets();
+  const hasHydrated = useAuthStore(state => state.hasHydrated);
+  const [hasEnteredApp, setHasEnteredApp] = useState(false);
+
+  if (!hasHydrated || !hasEnteredApp) {
+    return <SplashScreen onContinue={() => setHasEnteredApp(true)} />;
+  }
 
   return (
     <View className="flex-1" style={styles.container}>
