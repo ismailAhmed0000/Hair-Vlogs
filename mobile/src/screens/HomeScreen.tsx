@@ -103,7 +103,7 @@ export function HomeScreen() {
         <View className="items-center">
           <Pressable
             onPress={handleTakePhoto}
-            className="relative aspect-square w-72 items-center justify-center overflow-hidden rounded-3xl bg-gray-100"
+            className="relative h-80 w-72 items-center justify-center overflow-hidden rounded-3xl bg-gray-100"
           >
             {capturedPhotoUri ? (
               <Image
@@ -128,7 +128,7 @@ export function HomeScreen() {
           </Pressable>
         </View>
 
-        <View className="mt-8">
+        <View className="mt-14">
           <EmptyStatePill text="Recents" />
         </View>
 
