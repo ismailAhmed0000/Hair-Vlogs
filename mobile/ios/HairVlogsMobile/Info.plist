@@ -33,6 +33,10 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Cut uses your camera to take photos of your haircuts.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Cut saves the photos you take to your photo library.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
 	<key>RCTNewArchEnabled</key>

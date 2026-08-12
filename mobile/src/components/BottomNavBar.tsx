@@ -67,7 +67,7 @@ function InboxIcon({ active }: { active: boolean }) {
 
 export function BottomNavBar({ activeTab, onTabChange }: BottomNavBarProps) {
   return (
-    <View className="flex-row items-center justify-center gap-14 border-t border-gray-100 py-6">
+    <View className="flex-row items-center justify-center gap-14 border-t border-gray-100 pt-3 pb-6">
       <Pressable onPress={() => onTabChange('memories')} hitSlop={12}>
         <CloudIcon active={activeTab === 'memories'} />
       </Pressable>
