@@ -3,29 +3,34 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LabeledInput } from '../components/LabeledInput';
 import { ScissorsIcon } from '../components/ScissorsIcon';
-import { useLogin } from '../hooks/useAuth';
+import { useRegister } from '../hooks/useAuth';
 import { ApiError } from '../lib/apiClient';
 
-interface LoginScreenProps {
-  onNavigateToRegister: () => void;
+interface RegisterScreenProps {
+  onNavigateToLogin: () => void;
 }
 
-export function LoginScreen({ onNavigateToRegister }: LoginScreenProps) {
+export function RegisterScreen({ onNavigateToLogin }: RegisterScreenProps) {
   const insets = useSafeAreaInsets();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const login = useLogin();
+  const register = useRegister();
 
   const errorMessage =
-    login.error instanceof ApiError
-      ? login.error.message
-      : login.error
+    register.error instanceof ApiError
+      ? register.error.message
+      : register.error
       ? 'Something went wrong'
       : null;
 
   const handleSubmit = () => {
-    if (!email || !password) return;
-    login.mutate({ email: email.trim().toLowerCase(), password });
+    if (!name || !email || !password) return;
+    register.mutate({
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      password,
+    });
   };
 
   return (
@@ -40,12 +45,20 @@ export function LoginScreen({ onNavigateToRegister }: LoginScreenProps) {
         <ScissorsIcon size={24} color="#fff" />
       </View>
 
-      <Text className="mt-6 text-3xl font-bold text-black">Welcome back</Text>
+      <Text className="mt-6 text-3xl font-bold text-black">
+        Create account
+      </Text>
       <Text className="mt-1 text-base text-gray-400">
-        Log in to see your haircut history
+        Start saving your haircut references
       </Text>
 
       <View className="mt-8 gap-4">
+        <LabeledInput
+          label="Name"
+          value={name}
+          onChangeText={setName}
+          autoCapitalize="words"
+        />
         <LabeledInput
           label="Email"
           value={email}
@@ -62,32 +75,34 @@ export function LoginScreen({ onNavigateToRegister }: LoginScreenProps) {
         />
       </View>
 
-      <Pressable className="mt-3 self-end">
-        <Text className="text-sm text-gray-400">Forgot password?</Text>
-      </Pressable>
-
       {errorMessage && (
-        <Text className="mt-2 text-sm text-red-500">{errorMessage}</Text>
+        <Text className="mt-3 text-sm text-red-500">{errorMessage}</Text>
       )}
 
       <Pressable
         onPress={handleSubmit}
-        disabled={login.isPending}
+        disabled={register.isPending}
         className="mt-4 items-center rounded-full bg-black py-4"
       >
-        {login.isPending ? (
+        {register.isPending ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text className="text-base font-semibold text-white">Log In</Text>
+          <Text className="text-base font-semibold text-white">
+            Create Account
+          </Text>
         )}
       </Pressable>
 
+      <Text className="mt-3 text-center text-xs text-gray-400">
+        By continuing you agree to our Terms & Privacy Policy
+      </Text>
+
       <View className="flex-1" />
 
-      <Pressable onPress={onNavigateToRegister} className="items-center">
+      <Pressable onPress={onNavigateToLogin} className="items-center">
         <Text className="text-sm text-gray-400">
-          Don't have an account?{' '}
-          <Text className="font-semibold text-black">Sign up</Text>
+          Already have an account?{' '}
+          <Text className="font-semibold text-black">Log in</Text>
         </Text>
       </Pressable>
     </View>

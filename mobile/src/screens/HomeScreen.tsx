@@ -2,6 +2,8 @@ import { useState } from 'react';
 import {
   Alert,
   Image,
+  PermissionsAndroid,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -12,6 +14,8 @@ import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomNavBar, NavTab } from '../components/BottomNavBar';
 import { useHaircuts } from '../hooks/useHaircuts';
+import { HairlogScreen } from './HairlogScreen';
+import { ProfileScreen } from './ProfileScreen';
 
 function PlusIcon({
   size = 18,
@@ -67,6 +71,19 @@ export function HomeScreen() {
   const { data: haircuts } = useHaircuts();
 
   async function handleTakePhoto() {
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.CAMERA,
+      );
+      if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+        Alert.alert(
+          'Camera permission needed',
+          'Enable camera access in settings to take photos.',
+        );
+        return;
+      }
+    }
+
     const result = await launchCamera({
       mediaType: 'photo',
       saveToPhotos: true,
@@ -90,75 +107,86 @@ export function HomeScreen() {
 
   return (
     <View className="flex-1 bg-white">
-      <View
-        className="items-center px-6 pb-4"
-        style={{ paddingTop: insets.top + 12 }}
-      >
-        <Text className="text-3xl font-bold text-black" style={styles.headerTitle}>
-          VLOGS
-        </Text>
-      </View>
-
-      <View className="flex-1 px-6 pt-20">
-        <View className="items-center">
-          <Pressable
-            onPress={handleTakePhoto}
-            className="relative h-80 w-72 items-center justify-center overflow-hidden rounded-3xl bg-gray-100"
+      {activeTab === 'memories' ? (
+        <HairlogScreen />
+      ) : activeTab === 'inbox' ? (
+        <ProfileScreen />
+      ) : (
+        <>
+          <View
+            className="items-center px-6 pb-4"
+            style={{ paddingTop: insets.top + 12 }}
           >
-            {capturedPhotoUri ? (
-              <Image
-                source={{ uri: capturedPhotoUri }}
-                className="h-full w-full"
-                resizeMode="cover"
-              />
-            ) : (
-              <>
-                <ViewfinderCorner className="left-3 top-3 border-l-[3px] border-t-[3px] rounded-tl-lg" />
-                <ViewfinderCorner className="right-3 top-3 border-r-[3px] border-t-[3px] rounded-tr-lg" />
-                <ViewfinderCorner className="bottom-3 left-3 border-b-[3px] border-l-[3px] rounded-bl-lg" />
-                <ViewfinderCorner className="bottom-3 right-3 border-b-[3px] border-r-[3px] rounded-br-lg" />
-                <View
-                  className="h-20 w-20 items-center justify-center rounded-full bg-black"
-                  style={styles.pillShadow}
-                >
-                  <PlusIcon size={28} color="#fff" />
-                </View>
-              </>
-            )}
-          </Pressable>
-        </View>
-
-        <View className="mt-14">
-          <EmptyStatePill text="Recents" />
-        </View>
-
-        {!haircuts || haircuts.length === 0 ? (
-          <View className="mt-10 items-center gap-1">
-            <Text className="text-center text-xl font-bold text-black">
-              No Vlogs Yet
-            </Text>
-            <Text className="text-center text-base text-gray-400">
-              Tap + above to record your first one
+            <Text
+              className="text-3xl font-bold text-black"
+              style={styles.headerTitle}
+            >
+              VLOGS
             </Text>
           </View>
-        ) : (
-          <View className="mt-10 gap-3">
-            {haircuts.map(haircut => (
-              <View
-                key={haircut.id}
-                className="rounded-2xl border border-gray-100 px-4 py-3"
+
+          <View className="flex-1 px-6 pt-20">
+            <View className="items-center">
+              <Pressable
+                onPress={handleTakePhoto}
+                className="relative h-80 w-72 items-center justify-center overflow-hidden rounded-3xl bg-gray-100"
               >
-                <Text className="text-base font-medium text-black">
-                  {haircut.title}
+                {capturedPhotoUri ? (
+                  <Image
+                    source={{ uri: capturedPhotoUri }}
+                    className="h-full w-full"
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <>
+                    <ViewfinderCorner className="left-3 top-3 border-l-[3px] border-t-[3px] rounded-tl-lg" />
+                    <ViewfinderCorner className="right-3 top-3 border-r-[3px] border-t-[3px] rounded-tr-lg" />
+                    <ViewfinderCorner className="bottom-3 left-3 border-b-[3px] border-l-[3px] rounded-bl-lg" />
+                    <ViewfinderCorner className="bottom-3 right-3 border-b-[3px] border-r-[3px] rounded-br-lg" />
+                    <View
+                      className="h-20 w-20 items-center justify-center rounded-full bg-black"
+                      style={styles.pillShadow}
+                    >
+                      <PlusIcon size={28} color="#fff" />
+                    </View>
+                  </>
+                )}
+              </Pressable>
+            </View>
+
+            <View className="mt-14">
+              <EmptyStatePill text="Recents" />
+            </View>
+
+            {!haircuts || haircuts.length === 0 ? (
+              <View className="mt-10 items-center gap-1">
+                <Text className="text-center text-xl font-bold text-black">
+                  No Vlogs Yet
                 </Text>
-                <Text className="text-sm text-gray-400">
-                  {haircut.date_taken}
+                <Text className="text-center text-base text-gray-400">
+                  Tap + above to record your first one
                 </Text>
               </View>
-            ))}
+            ) : (
+              <View className="mt-10 gap-3">
+                {haircuts.map(haircut => (
+                  <View
+                    key={haircut.id}
+                    className="rounded-2xl border border-gray-100 px-4 py-3"
+                  >
+                    <Text className="text-base font-medium text-black">
+                      {haircut.title}
+                    </Text>
+                    <Text className="text-sm text-gray-400">
+                      {haircut.date_taken}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
-        )}
-      </View>
+        </>
+      )}
 
       <BottomNavBar activeTab={activeTab} onTabChange={setActiveTab} />
     </View>
