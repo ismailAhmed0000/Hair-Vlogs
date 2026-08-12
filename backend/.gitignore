@@ -4,3 +4,4 @@ tmp/
 *.log
 .DS_Store
 hairvlogs-api
+uploads/

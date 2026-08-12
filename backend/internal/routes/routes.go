@@ -14,6 +14,7 @@ func Setup(app *fiber.App, db *gorm.DB, cfg *config.Config) {
 	userHandler := handlers.NewUserHandler(db)
 	haircutHandler := handlers.NewHaircutHandler(db)
 	photoHandler := handlers.NewPhotoHandler(db)
+	uploadHandler := handlers.NewUploadHandler(cfg.UploadsDir)
 
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "ok"})
@@ -47,4 +48,6 @@ func Setup(app *fiber.App, db *gorm.DB, cfg *config.Config) {
 	photos.Put("/:id", photoHandler.Update)
 	photos.Delete("/:id", photoHandler.Delete)
 	photos.Patch("/:id/cover", photoHandler.SetCover)
+
+	protected.Post("/uploads", uploadHandler.Create)
 }

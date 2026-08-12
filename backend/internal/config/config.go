@@ -14,6 +14,7 @@ type Config struct {
 	JWTSecret    string
 	JWTExpiry    time.Duration
 	AllowOrigins string
+	UploadsDir   string
 }
 
 func Load() *Config {
@@ -25,6 +26,7 @@ func Load() *Config {
 		JWTSecret:    getEnv("JWT_SECRET", "change-me-in-production"),
 		JWTExpiry:    time.Duration(getEnvInt("JWT_EXPIRY_HOURS", 72)) * time.Hour,
 		AllowOrigins: getEnv("ALLOW_ORIGINS", "*"),
+		UploadsDir:   getEnv("UPLOADS_DIR", "./uploads"),
 	}
 }
 

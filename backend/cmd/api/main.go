@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"hairvlogs-api/internal/config"
 	"hairvlogs-api/internal/database"
@@ -15,6 +16,10 @@ import (
 
 func main() {
 	cfg := config.Load()
+
+	if err := os.MkdirAll(cfg.UploadsDir, 0o755); err != nil {
+		log.Fatalf("failed to create uploads dir: %v", err)
+	}
 
 	db, err := database.Connect(cfg.DatabaseURL)
 	if err != nil {
@@ -34,6 +39,7 @@ func main() {
 	}))
 
 	app.Static("/openapi.yaml", "./docs/openapi.yaml")
+	app.Static("/uploads", cfg.UploadsDir)
 	app.Get("/docs", swaggerUI)
 
 	routes.Setup(app, db, cfg)

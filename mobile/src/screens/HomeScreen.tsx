@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
-  Image,
   PermissionsAndroid,
   Platform,
   Pressable,
@@ -10,10 +10,14 @@ import {
   View,
 } from 'react-native';
 import { launchCamera } from 'react-native-image-picker';
+import { useQueryClient } from '@tanstack/react-query';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomNavBar, NavTab } from '../components/BottomNavBar';
-import { useHaircuts } from '../hooks/useHaircuts';
+import { createHaircut } from '../api/haircuts';
+import { createPhoto } from '../api/photos';
+import { uploadImage } from '../api/uploads';
+import { haircutKeys, useHaircuts } from '../hooks/useHaircuts';
 import { HairlogScreen } from './HairlogScreen';
 import { ProfileScreen } from './ProfileScreen';
 
@@ -66,9 +70,10 @@ const styles = StyleSheet.create({
 
 export function HomeScreen() {
   const [activeTab, setActiveTab] = useState<NavTab>('home');
-  const [capturedPhotoUri, setCapturedPhotoUri] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const insets = useSafeAreaInsets();
   const { data: haircuts } = useHaircuts();
+  const queryClient = useQueryClient();
 
   async function handleTakePhoto() {
     if (Platform.OS === 'android') {
@@ -99,9 +104,39 @@ export function HomeScreen() {
       return;
     }
 
-    const uri = result.assets?.[0]?.uri;
-    if (uri) {
-      setCapturedPhotoUri(uri);
+    const asset = result.assets?.[0];
+    if (!asset?.uri) {
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const imageUrl = await uploadImage({
+        uri: asset.uri,
+        name: asset.fileName,
+        type: asset.type,
+      });
+
+      const haircut = await createHaircut({
+        title: new Date().toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        }),
+        date_taken: new Date().toISOString().slice(0, 10),
+      });
+
+      await createPhoto(haircut.id, { image_url: imageUrl, is_cover: true });
+
+      queryClient.invalidateQueries({ queryKey: haircutKeys.all });
+    } catch (error) {
+      Alert.alert(
+        'Could not save photo',
+        error instanceof Error ? error.message : 'Something went wrong.',
+      );
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -129,27 +164,24 @@ export function HomeScreen() {
             <View className="items-center">
               <Pressable
                 onPress={handleTakePhoto}
+                disabled={isSaving}
                 className="relative h-80 w-72 items-center justify-center overflow-hidden rounded-3xl bg-gray-100"
               >
-                {capturedPhotoUri ? (
-                  <Image
-                    source={{ uri: capturedPhotoUri }}
-                    className="h-full w-full"
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <>
-                    <ViewfinderCorner className="left-3 top-3 border-l-[3px] border-t-[3px] rounded-tl-lg" />
-                    <ViewfinderCorner className="right-3 top-3 border-r-[3px] border-t-[3px] rounded-tr-lg" />
-                    <ViewfinderCorner className="bottom-3 left-3 border-b-[3px] border-l-[3px] rounded-bl-lg" />
-                    <ViewfinderCorner className="bottom-3 right-3 border-b-[3px] border-r-[3px] rounded-br-lg" />
-                    <View
-                      className="h-20 w-20 items-center justify-center rounded-full bg-black"
-                      style={styles.pillShadow}
-                    >
-                      <PlusIcon size={28} color="#fff" />
-                    </View>
-                  </>
+                <ViewfinderCorner className="left-3 top-3 border-l-[3px] border-t-[3px] rounded-tl-lg" />
+                <ViewfinderCorner className="right-3 top-3 border-r-[3px] border-t-[3px] rounded-tr-lg" />
+                <ViewfinderCorner className="bottom-3 left-3 border-b-[3px] border-l-[3px] rounded-bl-lg" />
+                <ViewfinderCorner className="bottom-3 right-3 border-b-[3px] border-r-[3px] rounded-br-lg" />
+                <View
+                  className="h-20 w-20 items-center justify-center rounded-full bg-black"
+                  style={styles.pillShadow}
+                >
+                  <PlusIcon size={28} color="#fff" />
+                </View>
+
+                {isSaving && (
+                  <View className="absolute inset-0 items-center justify-center bg-black/30">
+                    <ActivityIndicator color="#fff" />
+                  </View>
                 )}
               </Pressable>
             </View>
