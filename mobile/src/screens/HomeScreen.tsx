@@ -192,9 +192,7 @@ export function HomeScreen() {
 
             {!haircuts || haircuts.length === 0 ? (
               <View className="mt-10 items-center gap-1">
-                <Text className="text-center text-xl font-bold text-black">
-                  No Vlogs Yet
-                </Text>
+                <Text className="text-center text-xl font-bold text-black"></Text>
                 <Text className="text-center text-base text-gray-400">
                   Tap + above to record your first one
                 </Text>
